@@ -13,7 +13,7 @@ const getPosts = async () => {
     
     
     //Laddar och gör om från json till js
-    const res = await fetch(BASE_URL + '?_limit=7')
+    const res = await fetch(BASE_URL + '?_limit=5')
     const json = await res.json()
 
     json.forEach(todo => {
@@ -28,7 +28,8 @@ getPosts()
 
 const postTodos = () => {
     todos.forEach(todo => {
-        output.appendChild(createTodo(todo));
+        const item = createTodo(todo);
+        output.appendChild(item)
     });
 }
 
@@ -36,15 +37,11 @@ const postTodos = () => {
 //den här funktionen skapar en ny Item i listan.
 const createTodo = (todo) => {
 
-
-     //bygg ihop ett nytt element, skapa själva elementen var för sig. först en div med class item
      const item = document.createElement('div');
      item.classList.add('item');
 
-    // en p med todo som text
      const p = document.createElement('p');
      
-
      if(todo.completed === true) {
         item.className = 'item done'
         p.className = 'line'
@@ -76,7 +73,6 @@ const createTodo = (todo) => {
 const handleSubmit = e => {
     e.preventDefault()
 
-     //Förhindra att lägga till tomma rader
      if(input.value.trim() === '') {
         return;
     }
@@ -100,8 +96,9 @@ fetch(BASE_URL, {
   .then((response) => response.json())
   .then((json) => {
     todos.push(json)
-    //körs inne här, om under så kommer den att köras först när nästa läggs till.
-    postTodos();
+
+    const item = createTodo(json);
+    output.appendChild(item)
   });
   
 
@@ -112,8 +109,6 @@ fetch(BASE_URL, {
 form.addEventListener('submit', handleSubmit)
 
 
-
-//MODAL
 
 output.addEventListener('click', (e) => {
 
@@ -160,16 +155,6 @@ document.addEventListener('click', e => {
 
 
    
-
-//     const item = createTodo(todo);
-//     console.log(item)
-
-//    document.querySelector('#output').appendChild(item);
-
-//     //för att nollställa inputen inför nästa
-//     // input.value = ""; eller
-//     form.reset();
-// })
 
 
 //Efter frågetecken verkar bli som att gå in i ett objekt. På det här sättet under kommer jag att få ut alla med userId 2. 
