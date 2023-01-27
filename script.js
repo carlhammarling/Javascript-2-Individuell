@@ -1,32 +1,26 @@
 const BASE_URL = 'https://jsonplaceholder.typicode.com/todos'
-
-
-
-const form = document.querySelector('.card form');
-const addBtn = document.querySelector('.card button');
-const output = document.querySelector('#output');
-const input = document.querySelector('#form > input');
-
 const todos = []
 
-const getPosts = async () => {
-    
-    
-    //Laddar och gör om från json till js
-    const res = await fetch(BASE_URL + '?_limit=5')
-    const json = await res.json()
+const output = document.querySelector('#output');
 
-    json.forEach(todo => {
+//Funktion som hämtar API och gör om till JS-object. Datan som hämtas sparas i den lokala arrayen todo.
+const getPosts = async () => { 
+    const res = await fetch(BASE_URL + '?_limit=5')                                   // limit efter BASE_URL är antalet som hämtas.
+    const data = await res.json()
+
+    data.forEach(todo => {
         todos.push(todo)
     })
 
     //Här finns datan och kör här en funktion som skapar ett html-element med forEach för varje todo i arrayen.
-    postTodos()
+    postTodo()
 }
-
 getPosts()
 
-const postTodos = () => {
+//En funktion som förtst tömmer DOMen, tar varje objekt från den lokala arrayen och kör en funktion som skapar HTML innehållet. 
+// Sen lägger den till det i output. Körs i funktionen över.
+const postTodo = () => {
+    output.innerHTML = ''
     todos.forEach(todo => {
         const item = createTodo(todo);
         output.appendChild(item)
@@ -34,7 +28,7 @@ const postTodos = () => {
 }
 
 
-//den här funktionen skapar en ny Item i listan.
+//den här funktionen skapar HTML-innehållet av datan. Körs i funktionen över
 const createTodo = (todo) => {
 
      const item = document.createElement('div');
@@ -69,6 +63,9 @@ const createTodo = (todo) => {
     return item;
 
 }
+const form = document.querySelector('.card form');
+const addBtn = document.querySelector('.card button');
+const input = document.querySelector('#form > input');
 
 const handleSubmit = e => {
     e.preventDefault()
@@ -109,12 +106,14 @@ fetch(BASE_URL, {
 form.addEventListener('submit', handleSubmit)
 
 
-
+//en edventlistener som hanterar både delete och färdigmarkering
 output.addEventListener('click', (e) => {
 
     //om innertecten på knappen e delete
     if(e.target.innerText === 'delete' && e.target.parentElement.className === 'item done') {
         e.target.parentElement.remove();
+
+        fetch(BASE_URL)
     }
 
     else if(e.target.innerText === 'delete' && e.target.parentElement.className !== 'item done') {
