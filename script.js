@@ -1,11 +1,11 @@
-const BASE_URL = 'https://jsonplaceholder.typicode.com/todos'
+const BASE_URL = 'https://jsonplaceholder.typicode.com/todos/'
 const todos = []
 
 const output = document.querySelector('#output');
 
 //Funktion som hämtar API och gör om till JS-object. Datan som hämtas sparas i den lokala arrayen todo.
 const getPosts = async () => { 
-    const res = await fetch(BASE_URL + '?_limit=5')                                   // limit efter BASE_URL är antalet som hämtas.
+    const res = await fetch(BASE_URL + '?_limit=7')                                   // limit efter BASE_URL är antalet som hämtas.
     const data = await res.json()
 
     data.forEach(todo => {
@@ -33,6 +33,7 @@ const createTodo = (todo) => {
 
      const item = document.createElement('div');
      item.classList.add('item');
+     item.id = todo.id;
 
      const p = document.createElement('p');
      
@@ -90,14 +91,16 @@ fetch(BASE_URL, {
     'Content-type': 'application/json; charset=UTF-8',
   },
 })
-  .then((response) => response.json())
-  .then((json) => {
-    todos.push(json)
+  .then((response) => 
+    response.json())
+  .then((data) => {
+    data.id = crypto.randomUUID()
+    todos.push(data)
 
-    const item = createTodo(json);
+    const item = createTodo(data);
     output.appendChild(item)
   });
-  
+  console.log(todos)
 
   form.reset();
 }
@@ -111,9 +114,21 @@ output.addEventListener('click', (e) => {
 
     //om innertecten på knappen e delete
     if(e.target.innerText === 'delete' && e.target.parentElement.className === 'item done') {
-        e.target.parentElement.remove();
+        
 
-        fetch(BASE_URL)
+        fetch(BASE_URL + e.target.parentElement.id, {
+            method: 'DELETE'
+        })
+        .then(res => {
+            console.log(res)
+            if(res.ok) {
+                e.target.parentElement.remove();
+                const index = todos.findIndex(todo => todo.id == e.target.parentElement.id)
+                todos.splice(index, 1)
+            }
+        })
+        console.log(todos)
+
     }
 
     else if(e.target.innerText === 'delete' && e.target.parentElement.className !== 'item done') {
@@ -122,13 +137,50 @@ output.addEventListener('click', (e) => {
     }
 
     else if(e.target.nodeName === 'P') {
-        e.target.classList.toggle('line')
-        e.target.parentElement.classList.toggle('done')
+        //hitta id genom att trycka
+        const todo = todos.find(_todo => _todo.id == e.target.parentElement.id)
+        //Uppdatera databasen
+        fetch(BASE_URL + todo.id, {
+            method: 'PATCH',
+            body: JSON.stringify({
+              completed: !todo.completed,      //det det inte är
+            }),
+            headers: {
+              'Content-type': 'application/json; charset=UTF-8',
+            },
+        })
+        //Kolla svar från databasen, när svaret är ok så gör vi nåt
+        .then((response) => response.json())
+        .then((data) => {
+            console.log(data)
+            e.target.classList.toggle('line')
+            e.target.parentElement.classList.toggle('done')
+            todo.completed = data.completed
+        });
+
+
     }
     else if(e.target.nodeName === 'DIV') {
-        console.log(e.target)
-        e.target.querySelector('p').classList.toggle('line')
-        e.target.classList.toggle('done')
+        const todo = todos.find(_todo => _todo.id == e.target.id)
+        //Uppdatera databasen
+        fetch(BASE_URL + todo.id, {
+            method: 'PATCH',
+            body: JSON.stringify({
+              completed: !todo.completed,      //det det inte är
+            }),
+            headers: {
+              'Content-type': 'application/json; charset=UTF-8',
+            },
+        })
+        //Kolla svar från databasen, när svaret är ok så gör vi nåt
+        .then((response) => response.json())
+        .then((data) => {
+            console.log(data)
+            e.target.querySelector('p').classList.toggle('line')
+            e.target.classList.toggle('done')
+            todo.completed = data.completed
+        });
+        
     }
 
     
