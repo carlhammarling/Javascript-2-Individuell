@@ -95,6 +95,11 @@ input:focus {
 
 #output {
   overflow: auto;
+  position: relative;
+}
+
+#output::-webkit-scrollbar {
+  display: none;
 }
 
 .line {
