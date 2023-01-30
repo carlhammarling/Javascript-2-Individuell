@@ -1,11 +1,11 @@
-const BASE_URL = 'https://jsonplaceholder.typicode.com/todos'
+const BASE_URL = 'https://jsonplaceholder.typicode.com/todos/'
 const todos = []
 
 const output = document.querySelector('#output');
 
 //Funktion som hämtar API och gör om till JS-object. Datan som hämtas sparas i den lokala arrayen todo.
 const getPosts = async () => { 
-    const res = await fetch(BASE_URL + '?_limit=5')                                   // limit efter BASE_URL är antalet som hämtas.
+    const res = await fetch(BASE_URL + '?_limit=7')                                   // limit efter BASE_URL är antalet som hämtas.
     const data = await res.json()
 
     data.forEach(todo => {
@@ -33,6 +33,7 @@ const createTodo = (todo) => {
 
      const item = document.createElement('div');
      item.classList.add('item');
+     item.id = todo.id;
 
      const p = document.createElement('p');
      
@@ -71,6 +72,8 @@ const handleSubmit = e => {
     e.preventDefault()
 
      if(input.value.trim() === '') {
+         document.querySelector('.modal p').innerText = `Your todo can't be empty! Please write something.`
+        document.querySelector('.modalWrapper').classList.toggle('hidden');
         return;
     }
 
@@ -90,14 +93,23 @@ fetch(BASE_URL, {
     'Content-type': 'application/json; charset=UTF-8',
   },
 })
-  .then((response) => response.json())
-  .then((json) => {
-    todos.push(json)
+    .then((res) => {
+        if(!res.ok) {
+            throw new Error('Request failed!');
+        }
+        return res.json()
+    })
+  .then((data) => {
+    data.id = crypto.randomUUID()
+    todos.push(data)
 
-    const item = createTodo(json);
+    const item = createTodo(data);
     output.appendChild(item)
+  })
+  .catch(error => {
+    console.error(error);
   });
-  
+  console.log(todos)
 
   form.reset();
 }
@@ -109,61 +121,103 @@ form.addEventListener('submit', handleSubmit)
 //en edventlistener som hanterar både delete och färdigmarkering
 output.addEventListener('click', (e) => {
 
-    //om innertecten på knappen e delete
     if(e.target.innerText === 'delete' && e.target.parentElement.className === 'item done') {
-        e.target.parentElement.remove();
-
-        fetch(BASE_URL)
+        
+        fetch(BASE_URL + e.target.parentElement.id, {
+            method: 'DELETE'
+        })
+        .then(res => {
+            if(res.ok) {
+                e.target.parentElement.remove();
+                const index = todos.findIndex(todo => todo.id == e.target.parentElement.id)
+                todos.splice(index, 1)
+            }
+        })
     }
-
     else if(e.target.innerText === 'delete' && e.target.parentElement.className !== 'item done') {
         //här ska modalen öppnas
+        document.querySelector('.modal p').innerText = 'You have to finnish the task before you can delete it! To mark a task as done, simply click on it.'
         document.querySelector('.modalWrapper').classList.toggle('hidden');
     }
 
+
+
+
+    //Hantering av completed/styling
+
     else if(e.target.nodeName === 'P') {
-        e.target.classList.toggle('line')
-        e.target.parentElement.classList.toggle('done')
+        //hitta id genom att trycka
+        const todo = todos.find(_todo => _todo.id == e.target.parentElement.id)
+        //Uppdatera databasen
+        fetch(BASE_URL + todo.id, {
+            method: 'PATCH',
+            body: JSON.stringify({
+              completed: !todo.completed,      //det det inte är
+            }),
+            headers: {
+              'Content-type': 'application/json; charset=UTF-8',
+            },
+        })
+        //Kolla svar från databasen, när svaret är ok så gör vi nåt
+        .then((res) => {
+            console.log(res)
+            if(!res.ok) {
+                throw new Error('Request failed!');   
+            }
+            return res.json()
+            
+        })
+        .then((data) => {
+            console.log(data)
+            e.target.classList.toggle('line')
+            e.target.parentElement.classList.toggle('done')
+            todo.completed = data.completed
+        })
+        .catch(error => {
+            console.error(error);
+          });
     }
     else if(e.target.nodeName === 'DIV') {
-        console.log(e.target)
-        e.target.querySelector('p').classList.toggle('line')
-        e.target.classList.toggle('done')
-    }
-
-    
+        const todo = todos.find(_todo => _todo.id == e.target.id)
+        //Uppdatera databasen
+        fetch(BASE_URL + todo.id, {
+            method: 'PATCH',
+            body: JSON.stringify({
+              completed: !todo.completed,      //det det inte är
+            }),
+            headers: {
+              'Content-type': 'application/json; charset=UTF-8',
+            },
+        })
+        //Kolla svar från databasen, när svaret är ok så gör vi nåt
+        .then((res) => {
+            if(!res.ok) {
+                throw new Error('Request failed!');
+            }
+            return res.json()
+        })
+        .then((data) => {
+            console.log(data)
+            e.target.querySelector('p').classList.toggle('line')
+            e.target.classList.toggle('done')
+            todo.completed = data.completed
+        })
+        .catch(error => {
+            console.error(error);
+          });   
+    }  
 })
+
+
+
 
 //För att stänga modal
 document.addEventListener('click', e => {
-    //Om den träffar modalWrapper eller button i modal
+    
     if(e.target === document.querySelector('.modalWrapper') || e.target === document.querySelector('.modal button')){
         document.querySelector('.modalWrapper').classList.toggle('hidden');
     }
 })
-
-
-
-
-
-
-
-
-
-
-
-
-   
-
-
-//Efter frågetecken verkar bli som att gå in i ett objekt. På det här sättet under kommer jag att få ut alla med userId 2. 
-// const query = 'https://jsonplaceholder.typicode.com/todos?userId=2'
-
-//Här ligger 3 olika statements samtidigt. Ett sätt att göra egna querys är direkt via ett formullär
-// const query2 = 'https://jsonplaceholder.typicode.com/todos?userId=2&_page=1&_limit=3'
-
-
-
 
 
 
